@@ -1,0 +1,92 @@
+References
+
+tim
+	http://www.arcticsilver.com/as5.htm
+nanosleep
+stdio.h
+wait, waitpid: 
+	man wait
+	http://publib.boulder.ibm.com/infocenter/iseries/v5r3/index.jsp?topic=%2Fapis%2Fwaitpid.htm
+fork, exec: 
+	http://www-h.eng.cam.ac.uk/help/tpl/unix/fork.html 
+	www.eg.bucknell.edu/~cs315/Spring07/labs/lab01/ForkTutorial.pdf
+	http://stackoverflow.com/questions/3676686/how-to-find-out-when-process-exits-in-linux
+signals:
+	http://www.cs.oberlin.edu/~jdonalds/341/lecture25.html
+structs:
+	http://publib.boulder.ibm.com/infocenter/lnxpcomp/v8v101/index.jsp?topic=%2Fcom.ibm.xlcpp8l.doc%2Flanguage%2Fref%2Fstrin.htm
+errno:
+	http://www.ibm.com/developerworks/aix/library/au-errnovariable/
+vim:
+	http://unix.stackexchange.com/questions/27586/how-can-i-edit-multiple-files-in-vim
+regex:
+	http://www.gnu.org/software/libc/manual/html_node/Regular-Expressions.html#Regular-Expressions
+	http://www.lemoda.net/c/unix-regex/index.html
+make
+	www.gnu.org/s/make/manual/make.html
+getopt
+	http://www.gnu.org/software/libc/manual/html_node/Getopt.html#Getopt
+
+Plan
+	-alarm
+	-temperature sensor read
+	-program execution + fork
+	-fancontrol
+	-execution time
+	-Makefile
+	-settings
+
+Todo
+	-vim/emacs/gvim
+	-c, c++, gdb
+	-Makefile
+	-install Unix system
+	-upgrade Windows
+	-cron
+	-laptop fan replacement
+	-investment
+	-fix hard disk
+	-charitable donations
+	-flu shot
+
+make
+-math: 
+	-generalize 
+	-properties (relationships = ordering, prereq., grouping, defaults, reuse) 
+	-methods 
+	-objects
+-ov: track changes, smart update, deduce
+-rule = target, prereq., recipe
+-\ = linebreak
+
+regex
+
+vim
+	ctrl+v, shift+I+char+enter
+	tabs
+	search + replace
+	navigation
+
+c
+	-extern, static
+	-header guards
+	-license gnu
+	-char str [50]; sizeof(str); //50
+	-prefix all functions
+	-typedef
+	-enum; typedef enum random { } random;
+	-const correctness
+	-ownership (free, malloc)
+	-executables
+	-compiler errors.for, const, 
+	-style
+
+lm-sensors
+
+fork
+-copied: page table, virtual address space (copy-on-write), 
+threads, mutexes, registers
+-~copied: mlock, alarms, async io 
+-shared: file descriptors,  
+-returns: - error (no mem), 0 child, + child pid (parent)
+-

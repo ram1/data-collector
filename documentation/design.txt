@@ -1,0 +1,102 @@
+#Functions
+
+writeFile
+
+/*
+@impl execvp
+@todo test SIGCHLD, wait, waitpid
+@note Even after calling exec, the process still counts as a child. Calls SIGCHLD upon termination.
+*/
+int launchBenchmark(const char *cmd, const char **args, int *pid);
+
+/*
+@desc "runspec perlbench" --> ["runspec", "perlbench"]
+@impl regex
+*/
+const char **splitRunString(char *cmd); 
+
+
+#Instrument API
+public: init(), start(), cleanup()
+private: read_instrument, write, parse, read_task
+	-read_task is the reading thread
+	-read_instrument performs a single read into a bufffer
+	-parse interprets the read data
+	-write sends commands
+
+
+###Options
+
+#cmd
+-t <time>, -o <output file>, -e <program/benchmark>, -c <config file>,
+-r <error file> -a (append to error file) -d (debug)
+
+
+#cfg
+-instrument files and enables: 
+	-dmm /dev/usbtmc0 dc/ac
+	-pws /dev/usbtmc1 dc/ac
+	-temp
+	-timestamp
+	-headers
+-csv or column output
+-printing interval [ms]
+
+#extras
+-.cpu0,.cpu1 vs. aggregate
+-specify file format header order
+-
+
+
+
+#File Format
+Time [ms], DMM [V], DMM [V], T1 [C], T2 [C], Fan Speed, <Headers>, ...
+<val>, ...
+<val>, ...
+
+
+#Use Cases
+-For {benchmark, frequency, fan speed, TEC current}, {T_avg, T_min, T_max, P_avg, P_tec}
+-Questions: fan speed impact, temperature contours, fixed power budget, impact of chip power on TEC, graphs, model comparison
+-Process files --> csv + graph
+
+#Tasks
+-read data
+-print data
+-execute benchmark
+-control algorithm
+
+
+1) allocate new
+2) reuse regmatch
+
+while(!NO_MATCH)
+{
+	match
+	
+
+
+
+}
+
+
+
+/*###command parsing functions###*/
+
+void print_regerror(int errcode, regex_t *compiled);
+char **split_runstring(const char *cmd);
+void free_runstring(char **array);
+void print_runstring(char **array);
+
+/*###commands###*/
+int launch_command(char *cmd);
+void kill_command(int pid);
+
+/*###data output###*/
+void collect_data(int pid);
+
+/*###setup/shutdown###*/
+void setup(); //start data collectors
+void shutdown(); //cleanup
+
+
