@@ -1,7 +1,7 @@
 #ifndef PWS_H
 #define PWS_H
 
-//#define COLLECT_PWS
+#define COLLECT_PWS
 #define PWS_BUFFER_SIZE 100
 #define NUM_PWS_CHANNELS 2
 

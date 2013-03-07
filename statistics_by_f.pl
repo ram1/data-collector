@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 #Usage
-#./statistics.pl [freq] [directory] [tec]
-#./statistics.pl [freq] [directory]
+#./statistics.pl [freq] [directory] [by_bm] [tec]
+#./statistics.pl [freq] [directory] [by_bm]
 #Processes data by benchmark
 
 $num_args = @ARGV;
 if (($num_args != 3) && ($num_args != 2)) { die "2 or 3 arguments expected; $num_args: @ARGV provided\n"; }
-$freq = $ARGV[0];
+$freq = $ARGV[0]; #frequency or benchmark
 $dirname = $ARGV[1];
 if ($num_args == 3) { $tec = $ARGV[2]; } else { $tec = ""; } #"tec_" or ""
 
@@ -19,7 +19,7 @@ print OUTPUT_FILE "benchmark,avg_T[C],min,max,meandev,initial,avg_shunt_v[V],"
 	. "core[i] Tinitial\n";
 
 opendir(DIR, $dirname) or die "can't opendir $dirname: $!";
-$regex = join "","_",$freq;
+$regex = $freq;
 
 @files = (); 
 while (defined($file = readdir(DIR)))
