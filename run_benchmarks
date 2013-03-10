@@ -1,0 +1,98 @@
+#!/bin/bash
+
+#http://www.linuxjournal.com/content/floating-point-math-bash
+function float_eval()
+{
+    local stat=0
+    local result=0.0
+    if [[ $# -gt 0 ]]; then
+	result=$(echo "scale=$float_scale; $*" | bc -q 2>/dev/null)
+	stat=$?
+	if [[ $stat -eq 0  &&  -z "$result" ]]; then stat=1; fi
+    fi
+    echo $result
+    return $stat
+}
+
+
+float_scale=4
+cmd_prefix="/usr/cpu2006/bin/runspec --config=lin32.cfg --size=ref --noreportable --iterations=1"
+num_cores=4
+tec_i_increment=0.5
+tec_num_steps=9
+tec_i_initial=0
+dir=../tec_results/one_tec_al_strip_small_run
+pws="/dev/usbtmc1"
+set -e
+mkdir -p $dir
+
+#power supply setup
+chmod 777 $pws
+echo "*RST" > $pws
+echo "SYST:REM" > $pws
+echo "OUTPUT 0" > $pws
+
+#engage/disengage tec
+for ((tec=1; tec>0; tec--))
+do
+	#tec values [A]
+	for ((k=0; k<$tec_num_steps; k++))
+	do
+		for freq in 1.95 1.55 1.65 1.75 1.85 
+		do		#gobmk hmmer sjeng libquantum h264ref omnetpp astar xalancbmk bwaves gamess milc zeusmp gromacs cactusADM leslie3d namd dealII soplex povray calculix GemsFDTD tonto lbm wrf sphinx3 bzip2 gcc mcf
+			for ben in perlbench bzip2 gcc povray gromacs
+			do
+				for ((i=0; i<$num_cores; i++))
+				do
+					echo "brown340" | sudo -S -E cpufreq-set -f ${freq}g -c ${i}
+				done
+				
+				currdir=$(pwd)
+				cd /usr/cpu2006
+				source shrc
+				cd $currdir
+				echo "$cmd_prefix $ben"
+			
+				#start TEC
+				set -f
+				exp="$tec_i_initial + $k * $tec_i_increment"
+				val=$(float_eval "$exp")
+				if [ $tec == 1 ]; then
+					echo "SOUR:VOLT 20V" > $pws
+					echo "SOUR:CURR ${val}A" > $pws
+					
+					echo "OUTPUT 1" > $pws
+				else
+					echo "OUTPUT 0" > $pws
+				fi
+				set +f
+			
+				#./data -e "$cmd_prefix $ben" -o "$dir/${ben}_${freq}_${tec}tec${val}a" -t 120 -n 1 -r "$dir/err_file" -a
+				./data -e "$cmd_prefix $ben" -t 30 -n 1 -i "0 0"
+		
+				for ((i=0; i<$num_cores; i++))
+				do
+					echo "brown340" | sudo -S -E cpufreq-set -f 1.55g -c ${i}
+				done
+		
+				if [ $tec == 1 ]; then
+					echo "OUTPUT 0" > $pws
+				fi
+				echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+				echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+				sleep 240
+				echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+				echo "*RST" > $pws
+				echo "SYST:REM" > $pws
+				echo "OUTPUT 0" > $pws
+		 	done 
+		done
+	done
+done	
+
+#cleanup
+echo "OUTPUT 0" > $pws
+echo "SYST:LOC" > $pws
+
+chmod o+w $dir
+chmod 666 $dir/*
