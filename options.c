@@ -14,6 +14,7 @@ void options_populate(int argc, char **argv)
 	options_opt.debug = 0;
 	options_opt.num_processes = 1;
 	options_opt.pws_current_string = NULL;
+	options_opt.pws_delay = 0;
 	
 	//#command line arguments
 	//Since we don't know whether there is a valid
@@ -22,10 +23,13 @@ void options_populate(int argc, char **argv)
 	opterr = 0; //getopt should not print errors
 	int c;
 	
-	while((c = getopt(argc, argv, "i:n:t:o:e:r:ad")) != -1)
+	while((c = getopt(argc, argv, "l:i:n:t:o:e:r:ad")) != -1)
 	{
 		switch(c)
 		{
+			case 'l':
+				options_opt.pws_delay = atoi(optarg);
+				break;
 			case 'n':
 				options_opt.num_processes = atoi(optarg);
 				break;
@@ -52,7 +56,7 @@ void options_populate(int argc, char **argv)
 				options_opt.pws_current_string = optarg;
 				break;
 			case '?':
-				if(optopt == 'e' || optopt == 'o' || optopt == 't' || optopt == 'n' || optopt == 'i')
+				if(optopt == 'e' || optopt == 'o' || optopt == 't' || optopt == 'n' || optopt == 'i' || optopt == 'l')
 				{
 					die("-%c requires an argument\n", optopt);
 				}
@@ -112,6 +116,12 @@ void options_populate(int argc, char **argv)
 		}
 		else
 			die("Please specify initial currents for the power supplies\n");
+
+		if(options_opt.pws_delay < 0)
+			die("Please specify a positive power supply delay [s]\n");
+		if(options_opt.timeout && 
+			options_opt.pws_delay > options_opt.timeout_sec)
+			die("Power supply delay is greater than timeout time\n");
 
 	#endif
 

@@ -53,17 +53,23 @@ void pws_myread(int file, char *cmd, char *buffer) {
 	else buffer[0] = 0;
 }
 
+//Delay variables
+struct timeval starttime;
+int engaged[NUM_PWS_CHANNELS];
+struct timeval now[NUM_PWS_CHANNELS];
+
 /*
 Opens the handles for each instrument
 */
-
 void init_pws() {
 	//i instrument number
 	//h handle
 	int i, h;
 	char fname[100];
+	gettimeofday(&starttime, 0);
 
 	for (i = 0; i < NUM_PWS_CHANNELS; i++) {
+		engaged[i] = 0;
 		//Assume that the power supply devices start from 
 		//usbtmc1 and up
 		sprintf(fname, "/dev/usbtmc%d", i+1);
@@ -75,9 +81,7 @@ void init_pws() {
 			pws_mywrite(files[i], "*RST");
 			pws_mywrite(files[i], "SYST:REM");
 			pws_mywrite(files[i], "SOUR:VOLT 20V");
-			sprintf(cmd_buffer,"SOUR:CURR %fA", options_opt.pws_current[i]);
-			pws_mywrite(files[i], cmd_buffer);
-			pws_mywrite(files[i], "OUTPUT 1");
+			pws_mywrite(files[i], "OUTPUT 0");
 
 				
 
@@ -104,12 +108,35 @@ void parse_pws(char *buffer, int ch, double *dataArray) {
 Instrument read and write loop.
 */
 void *rw_pws(void *chan) {
-
+	
 	char buffer[PWS_BUFFER_SIZE];
 	int ch = *((int *)chan);
 
 	//Loop. 
 	while (states[ch] != HALTED) {
+		/*
+		After the specified delay time, turn the power supplies
+		on. Startime is initialized in pws_init. An alternative
+		design would use a separate thread to start up the power
+		supplies. However, that design requires avoiding some race
+		conditions with mutexes. For example, the supplies
+		should not start after cleanup has been started. This design,
+		though slowing down the read loop, avoids those complexities.
+		*/
+		if(!engaged[ch])
+		{
+			gettimeofday(&now[ch], 0);	
+			if(options_opt.pws_delay == 0 || 
+				(now[ch].tv_sec-starttime.tv_sec > options_opt.pws_delay))
+			{
+				sprintf(buffer,"SOUR:CURR %fA", 
+					options_opt.pws_current[ch]);
+				pws_mywrite(files[ch], buffer);
+				pws_mywrite(files[ch], "OUTPUT 1");
+				engaged[ch] = 1;
+			}
+		}
+
 		pws_myread(files[ch], "MEAS:VOLT:DC?", buffer);
 		parse_pws(buffer, ch, curr_pws_v);
 
@@ -171,5 +198,6 @@ void pws_cleanup() {
 		}
 	}
 }
+
 
 

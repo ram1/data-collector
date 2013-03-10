@@ -28,6 +28,7 @@ typedef struct options
 	int num_processes; //number of processes to launch
 	char *pws_current_string; //space-separated pws initial currents
 	float pws_current[NUM_PWS_CHANNELS];
+	int pws_delay;
 } options;
 extern options options_opt;
 

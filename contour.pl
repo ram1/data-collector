@@ -18,7 +18,7 @@ while(defined($line = <FILE>))
 	if($i != 0)
 	{
 		@csv = split ",",$line;
-		@colonsv = split ":", $csv[0];
+		@colonsv = split "_", $csv[0];
 		if(!exists($freqs{$colonsv[1]}))
 		{
 			$freqs{$colonsv[1]} = 1;
@@ -46,14 +46,14 @@ while(defined($line = <FILE>))
 @i_vals =  sort {$a <=> $b} keys %currents;
 
 $i = 0;
-foreach $val (sort {$a <=> $b} keys %freqs)
+foreach $val (@freq_vals)
 {
 	$freq_mapping{$val} = $i;
 	$i = $i + 1;
 }
 
 $i = 0;
-foreach $val (sort {$a <=> $b} keys %currents)
+foreach $val (@i_vals)
 {
 	$i_mapping{$val} = $i;
 	$i = $i + 1;
@@ -70,7 +70,7 @@ while(defined($line = <FILE>))
 	if($i != 0)
 	{
 		@csv = split ",",$line;
-		@colonsv = split ":", $csv[0];
+		@colonsv = split "_", $csv[0];
 		$freq_num = $freq_mapping{$colonsv[1]};
 		$i_num;	
 		if($colonsv[2] =~ /tec(.+)a/)
@@ -82,7 +82,7 @@ while(defined($line = <FILE>))
 			die "no current detected\n";
 		}
 		
-		${$sorted[$freq_num]}[$i_num] = $line;
+		$sorted[$freq_num][$i_num] = $line;
 	}
 	else
 	{
@@ -90,17 +90,17 @@ while(defined($line = <FILE>))
 	}
 }
 
-for ($i = 0; $i < $#freq_vals; $i++)
+for ($i = 0; $i < (scalar @freq_vals); $i++)
 {
-	for($j = 0; $j < $#i_vals; $j++)
+	for($j = 0; $j < scalar @i_vals; $j++)
 	{
 		print OUTPUT join ",",$i_vals[$j],$sorted[$i][$j];
 	}
 }
 
-for ($i = 0; $i < $#i_vals; $i++)
+for ($i = 0; $i < scalar @i_vals; $i++)
 {
-	for($j = 0; $j < $#freq_vals; $j++)
+	for($j = 0; $j < scalar @freq_vals; $j++)
 	{
 		print OUTPUT join ",",$freq_vals[$j],$sorted[$j][$i];
 	}
