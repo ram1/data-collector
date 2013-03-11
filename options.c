@@ -2,6 +2,11 @@
 #include "utilities.h"
 options options_opt;
 
+void delete_options()
+{
+	free(options_opt.affinities);
+}
+
 void options_populate(int argc, char **argv)
 {
 	//#defaults
@@ -15,18 +20,31 @@ void options_populate(int argc, char **argv)
 	options_opt.num_processes = 1;
 	options_opt.pws_current_string = NULL;
 	options_opt.pws_delay = 0;
+	options_opt.affinities = NULL;
 	
 	//#command line arguments
 	//Since we don't know whether there is a valid
 	//error file when parsing command line arguments,
 	//output to the default set.
 	opterr = 0; //getopt should not print errors
-	int c;
+	int c, i;
+	int num_aftys;
+	char **aftys;
 	
-	while((c = getopt(argc, argv, "l:i:n:t:o:e:r:ad")) != -1)
+	while((c = getopt(argc, argv, "f:l:i:n:t:o:e:r:ad")) != -1)
 	{
 		switch(c)
 		{
+			case 'f':
+				aftys = split_runstring(optarg);
+				num_aftys = size_runstring(aftys);
+				options_opt.affinities = (int *)malloc(num_aftys*sizeof(int));
+				for(i = 0; i < num_aftys; i++)
+				{
+					options_opt.affinities[i] = atoi(aftys[i]);
+				}
+				free_runstring(aftys);
+				break;
 			case 'l':
 				options_opt.pws_delay = atoi(optarg);
 				break;
@@ -92,6 +110,26 @@ void options_populate(int argc, char **argv)
 	}
 	if(options_opt.num_processes < 1)
 		die("Please specify a positive number of processes to execute\n");
+
+	if(options_opt.affinities != NULL)
+	{
+		if(num_aftys != options_opt.num_processes)
+		{
+			die("The number of affinities must match" 
+				"the number of processes\n");
+		}
+
+		int i;
+		int num_procr = (int)sysconf(_SC_NPROCESSORS_ONLN);
+		for(i = 0; i < num_aftys; i++)
+		{
+			if(options_opt.affinities[i] < 0 ||
+				options_opt.affinities[i] >= num_procr)
+			{
+				die("Affinities must range in [0,# processors)\n");
+			}
+		}
+	}
 
 	#ifdef COLLECT_PWS
 		if(options_opt.pws_current_string != NULL)

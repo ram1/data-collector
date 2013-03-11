@@ -29,8 +29,14 @@ typedef struct options
 	char *pws_current_string; //space-separated pws initial currents
 	float pws_current[NUM_PWS_CHANNELS];
 	int pws_delay;
+	int *affinities;
 } options;
 extern options options_opt;
+
+/*
+@desc Cleans up any internally allocated memory in options_opt
+*/
+void delete_options();
 
 /*
 @desc Fills options_opt with the relevant

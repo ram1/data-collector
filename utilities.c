@@ -148,6 +148,16 @@ char **split_runstring(const char *cmd)
 	return array;
 }
 
+int size_runstring(const char * const *array)
+{
+	int offset = 0;
+	while(array[offset] != NULL)
+	{
+		offset++;
+	}
+	return offset;
+}
+
 /*
 @desc Frees the array and contained strings.
 */

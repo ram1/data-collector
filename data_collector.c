@@ -7,6 +7,9 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#define _GNU_SOURCE
+#define __USE_GNU
+#include <sched.h>
 #include "temperature.h"
 #include "options.h"
 #include "utilities.h"
@@ -215,8 +218,10 @@ void child_terminated(int signum)
 	-fork failed
 	-exec failed
 */
+int num_launched = 0;
 int launch_command(char *cmd)
 {
+	num_launched++;
 	int pid = fork();
 	if(pid > 0)
 	{
@@ -227,6 +232,23 @@ int launch_command(char *cmd)
 		//The child launches the specified command.
 		char **cmd_array = split_runstring(cmd);
 
+		//Set the affinity of the process to the 
+		//processor it should run on. Note affinities
+		//are preserved over execve calls.
+		if(options_opt.affinities != NULL)
+		{
+			cpu_set_t afty;
+			CPU_ZERO(&afty);
+			CPU_SET(options_opt.affinities[num_launched-1],&afty);
+			if(sched_setaffinity(0, sizeof(cpu_set_t), &afty)==-1)
+			{
+				//If we terminate here, there is no cleanup to
+				//do because we are in the child process.
+				char buf[100];
+				sprintf(buf, "affinity failure: %s\n", strerror(errno));
+				die(buf);
+			}
+		}
 		//Note that in the list of arguments, the command
 		//being executed is the first argument.
 		execvp(cmd_array[0], cmd_array);
@@ -342,6 +364,7 @@ int main(int argc, char **argv)
 	fclose(output_file_handle);
 	temp_cleanup();
 	power_cleanup();
+	delete_options();
 
 	#ifdef COLLECT_PWS
 	pws_cleanup();

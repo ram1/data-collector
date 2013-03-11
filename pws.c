@@ -77,11 +77,26 @@ void init_pws() {
 		if ((h = open(fname, O_RDWR)) >= 0) {
 			files[i] = h;
 
-			char cmd_buffer[100];
+			char buffer[100];
 			pws_mywrite(files[i], "*RST");
 			pws_mywrite(files[i], "SYST:REM");
 			pws_mywrite(files[i], "SOUR:VOLT 20V");
-			pws_mywrite(files[i], "OUTPUT 0");
+			
+			/*Start at a low current that prevents the RSV power
+			supply error, but allows observation of dynamic
+			behavior.*/
+			if(options_opt.pws_delay != 0 && 
+				options_opt.pws_current[i] != 0)
+			{
+				sprintf(buffer,"SOUR:CURR %fA", 
+					0.3);
+				pws_mywrite(files[i], buffer);
+				pws_mywrite(files[i], "OUTPUT 1");
+			}
+			else
+			{
+				pws_mywrite(files[i], "OUTPUT 0");
+			}
 
 				
 
