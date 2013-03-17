@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use Carp::Assert;
 #Usage
-#./statistics.pl [regex] [directory] 
+#./statistics.pl [regex] [directory] [num lines to skip]
 #Processes data files matching regex in the directory
 #@author Sriram Jayakumar
 #@date 3/7/2013
@@ -9,9 +9,10 @@ use Carp::Assert;
 #Argument Parsing
 tester();
 my $num_args = @ARGV;
-if ($num_args != 2) { die "2 arguments expected; $num_args: @ARGV provided\n"; }
+if ($num_args != 3) { die "3 arguments expected; $num_args: @ARGV provided\n"; }
 my $regex = $ARGV[0]; #frequency or benchmark
 my $dirname = $ARGV[1];
+my $skip_lines = $ARGV[2];
 
 #File Preparation
 print "@ARGV\n";
@@ -52,32 +53,38 @@ foreach my $file (@files_sorted)
 		my @voltages = ();
 		my @rpms = ();
 
+		my $linenum = 1;
 		while (defined(my $line = <FILE>))
 		{
-			my @columns = split(/\s+/, $line);
-
-			#Average T over all cores
-			my $t =($columns[0]+$columns[1]+$columns[2]+$columns[3])/4;
-			push @temperatures,$t;
-			
-			#Per core statistics
-			for (my $core=0; $core < $num_cores; $core++) 
+			if($linenum > $skip_lines)
 			{
-				push @{$core_temps[$core]}, $columns[$core];
-			}
-			
-			#Regulator voltage
-			push(@voltages, $columns[4]);
+				my @columns = split(/\s+/, $line);
 
-			#Fan speed
-			push(@rpms, $columns[6]);
+				#Average T over all cores
+				my $t =($columns[0]+$columns[1]+$columns[2]+$columns[3])/4;
+				push @temperatures,$t;
+				
+				#Per core statistics
+				for (my $core=0; $core < $num_cores; $core++) 
+				{
+					push @{$core_temps[$core]}, $columns[$core];
+				}
+				
+				#Regulator voltage
+				push(@voltages, $columns[4]);
 
-			my $tec_start_index = 7;
-			for(my $k = 0; $k < $num_tec; $k++)
-			{
-				push @{$tec_v[$k]},$columns[$tec_start_index+$k*2];
-				push @{$tec_i[$k]},$columns[$tec_start_index+$k*2+1];
+				#Fan speed
+				push(@rpms, $columns[6]);
+
+				my $tec_start_index = 7;
+				for(my $k = 0; $k < $num_tec; $k++)
+				{
+					push @{$tec_v[$k]},$columns[$tec_start_index+$k*2];
+					push @{$tec_i[$k]},$columns[$tec_start_index+$k*2+1];
+				}
 			}
+		
+			$linenum++;
 		}
 		
 		print OUTPUT_FILE join ",",$file,compute_avg(@temperatures),
