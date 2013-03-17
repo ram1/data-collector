@@ -18,10 +18,10 @@ function float_eval()
 float_scale=4
 cmd_prefix="/usr/cpu2006/bin/runspec --config=lin32.cfg --size=ref --noreportable --iterations=1"
 num_cores=4
-tec_i_increment=0.5
-tec_num_steps=10
+tec_i_increment=1
+tec_num_steps=5
 tec_i_initial=0
-dir=../tec_results/improved_2_application
+dir=../tec_results/omnetpp_lbm_2_application_trial3
 set -e
 mkdir -p $dir
 
@@ -41,9 +41,9 @@ do
 			set +f
 
 			#Frequency/current limit
-			if [[ "$freq" < "2.45" || "$val" > "0.5" ]]
-			then
-				for ben in perlbench 
+			#if [[ "$freq" < "2.45" || "$val" > "0.5" ]]
+			#then
+				for ben in omnetpp lbm
 				do
 					for ((i=0; i<$num_cores; i++))
 					do
@@ -67,14 +67,19 @@ do
 		
 					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
 					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
-					sleep 240
+					sleep 60
 					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+					sleep 30
+					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+					sleep 30
+					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+
 		 		done 
-			fi
+			#fi
 		done
 	done
 done	
 
-#cleanup
+#cleanup. read permissions only on files to protect data.
 chmod o+w $dir
 chmod 666 $dir/*
