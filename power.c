@@ -57,7 +57,7 @@ void init_power() {
 
 			if (k == 0) mywrite(myfile[k], "CONF:VOLT:DC MIN");
 			else mywrite(myfile[k], "CONF:VOLT:AC MIN");
-	
+
 			mywrite(myfile[k], "TRIG:COUN MIN"); 	
 			mywrite(myfile[k], "SAMP:COUN MAX"); 
 			mywrite(myfile[k], "SAMP:SOUR TIM"); 
@@ -65,7 +65,7 @@ void init_power() {
 			mywrite(myfile[k], "INIT"); 		
 			myread(myfile[k], "SYST:ERR?", err);
 			error_message("- POWER: meter %d initialized with error status %s", 
-				k, err);	
+				k, err);
 		}	
 	}
 	error_message("- detected %d power meters\n", k);
