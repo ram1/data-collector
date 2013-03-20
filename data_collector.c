@@ -89,14 +89,23 @@ void collect_data()
 
 	//##output data##
 	const struct timespec delay = {INTERVAL/1000,(INTERVAL%1000)*10e6};
+	int sent_kill = 0;
 	while(!done)
 	{
-		if(options_opt.timeout&&completed_ms>timeout_ms)
+		if(options_opt.timeout && completed_ms>timeout_ms && !sent_kill)
 		{
 			for(k = 0; k < options_opt.num_processes; k++)
 			{
 						kill_command(pids[k]);	
 			}
+
+			/*The purpose of marking sent_kill is to avoid sending kill signals twice.
+			It's possible that the signal is sent, but that the process does not
+			terminate immediately. Therefore, the data collection loop may occur one or more
+			time subsequently; in these situations we do not want to resend the kill signal
+			or collect new data. Initially, I did not have this variable, and I actually
+			encountered this bug.*/
+			sent_kill = 1;
 		}
 
 		done = 1;
@@ -115,47 +124,49 @@ void collect_data()
 			}
 		}
 
-
-		//temperatures
-		int i;
-		for(i = 0; i < num_cores; i++)
+		if(!sent_kill)
 		{
-			double t;
-			int temp_status = temp_read(i, &t);
-			if(temp_status != 0)
+			//temperatures
+			int i;
+			for(i = 0; i < num_cores; i++)
 			{
-				die("error %d: reading core %d T",
-           temp_status, i);
+				double t;
+				int temp_status = temp_read(i, &t);
+				if(temp_status != 0)
+				{
+					die("error %d: reading core %d T",
+        	   temp_status, i);
+				}
+				fprintf(output_file_handle, "%-15.1f", t);
 			}
-			fprintf(output_file_handle, "%-15.1f", t);
+
+
+			//power
+	  		for(i = 0; i < NUM_PWR_CHANNELS; i++) {
+	  		  fprintf(output_file_handle, "%-15.8f ", curr_pwr[i]);
+	  		}
+
+			//fan speeds
+			double fspeed;
+			for(i = 0; i < NUM_FANS; i++)
+			{
+				fan_read(i,&fspeed);
+				fprintf(output_file_handle, "%-15.5f", fspeed);
+			}
+
+
+			//power supplies. If we are not collecting data from
+			//the power supplies, the globals are initialized to zero
+			//and we will read these values.
+			for(i = 0; i < NUM_PWS_CHANNELS; i++)
+			{
+				fprintf(output_file_handle, "%-15.5f", curr_pws_v[i]);
+				fprintf(output_file_handle, "%-15.5f", curr_pws_i[i]);
+			}
+			
+			//timestamp [ms]
+			fprintf(output_file_handle, "%-15d\n", (int)completed_ms);
 		}
-
-
-		//power
-	  	for(i = 0; i < NUM_PWR_CHANNELS; i++) {
-	  	  fprintf(output_file_handle, "%-15.8f ", curr_pwr[i]);
-	  	}
-
-		//fan speeds
-		double fspeed;
-		for(i = 0; i < NUM_FANS; i++)
-		{
-			fan_read(i,&fspeed);
-			fprintf(output_file_handle, "%-15.5f", fspeed);
-		}
-
-
-		//power supplies. If we are not collecting data from
-		//the power supplies, the globals are initialized to zero
-		//and we will read these values.
-		for(i = 0; i < NUM_PWS_CHANNELS; i++)
-		{
-			fprintf(output_file_handle, "%-15.5f", curr_pws_v[i]);
-			fprintf(output_file_handle, "%-15.5f", curr_pws_i[i]);
-		}
-		
-		//timestamp [ms]
-		fprintf(output_file_handle, "%-15d\n", (int)completed_ms);
 
 		//nanosleep can be interrupted by signals, but
 		//this case doesn't need to be handled in any special way.

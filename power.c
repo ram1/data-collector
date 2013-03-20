@@ -21,20 +21,21 @@ void mywrite(int file, char *cmd) {
 	char str[50];
 	sprintf(str, "%s\n", cmd);
 	write(file, str, size + 1);
+
+	/*The associated nanosleep determines the reading
+	rate for the multimeter. Note that all commands, including
+	reads, will sleep for the specified time.*/
+	struct timespec waittime;
+	waittime.tv_sec = 0;
+	waittime.tv_nsec = 100000000;
+	nanosleep(&waittime, NULL);
 }
 
 void myread(int file, char *cmd, char *buffer) {
 	debug_message("READ1\n");
 
-	/*The associated nanosleep determines the reading
-	rate for the multimeter.*/
-	struct timespec waittime;
-	waittime.tv_sec = 0;
-	waittime.tv_nsec = 100000000;
 	int len;
-
 	mywrite(file, cmd);
-	nanosleep(&waittime, NULL);
 	len = read(file, buffer, BUFFER_SIZE);
 
 	if (len >= 0) buffer[len] = 0; 
@@ -194,7 +195,10 @@ void power_cleanup() {
 
 	// reset meters and tell worker threads to exit loops
 	for(i = 0; i < NUM_PWR_CHANNELS; i++) {
-		mywrite(myfile[i], "*RST"); 			
+		/*Do not send any commands to the power supply from this point onwards.
+		Since the handle will close soon, the commands are likely to be
+		sent only partially and put the multimeter into a bad state.*/
+
 		close(myfile[i]);
 	}
 
