@@ -39,5 +39,5 @@ void print_regerror(int errcode, regex_t *compiled);
 char **split_runstring(const char *cmd);
 void free_runstring(char **array);
 void print_runstring(char **array);
-int size_runstring(const char * const *array);
+int size_runstring(char **array);
 #endif

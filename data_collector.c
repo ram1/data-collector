@@ -133,7 +133,7 @@ void collect_data()
 
 		//power
 	  	for(i = 0; i < NUM_PWR_CHANNELS; i++) {
-	  	  fprintf(output_file_handle, "%-15.5f ", curr_pwr[i]);
+	  	  fprintf(output_file_handle, "%-15.8f ", curr_pwr[i]);
 	  	}
 
 		//fan speeds
@@ -145,15 +145,14 @@ void collect_data()
 		}
 
 
-		//power supplies
-		#ifdef COLLECT_PWS
-		double pws_v, pws_i;	
+		//power supplies. If we are not collecting data from
+		//the power supplies, the globals are initialized to zero
+		//and we will read these values.
 		for(i = 0; i < NUM_PWS_CHANNELS; i++)
 		{
 			fprintf(output_file_handle, "%-15.5f", curr_pws_v[i]);
 			fprintf(output_file_handle, "%-15.5f", curr_pws_i[i]);
 		}
-		#endif
 		
 		//timestamp [ms]
 		fprintf(output_file_handle, "%-15d\n", (int)completed_ms);

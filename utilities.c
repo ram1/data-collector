@@ -148,7 +148,7 @@ char **split_runstring(const char *cmd)
 	return array;
 }
 
-int size_runstring(const char * const *array)
+int size_runstring(char **array)
 {
 	int offset = 0;
 	while(array[offset] != NULL)

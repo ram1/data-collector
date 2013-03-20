@@ -169,7 +169,7 @@ void *rw_pws(void *chan) {
 
 		if (states[ch] == INIT) states[ch] = RUNNING;
 	}
-	states[ch] = HALTED;
+	states[ch] = TERMINATED;
 
 	return 0;
 }
@@ -207,7 +207,11 @@ void pws_cleanup() {
 		if (files[i] >= 0) {
 			int exit;
 			states[i] = HALTED;
-			exit = pthread_join(threads[i], NULL);
+			while(states[i] != TERMINATED)
+			{
+				sleep(1);
+			}
+			//exit = pthread_join(threads[i], NULL);
 			pws_mywrite(files[i], "OUTPUT 0");
 			close(files[i]);
 		}
