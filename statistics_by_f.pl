@@ -41,7 +41,8 @@ my $num_tec = 2;
 #Data
 foreach my $file (@files_sorted)
 {
- 	if ($file =~ m/\Q$regex/ && $file !~ m/summary/)
+	#Use \Q and \E if necessary around $regex
+ 	if ($file =~ m/$regex/ && $file !~ m/summary/)
 	{
 		print "$file\n";
 		open(FILE, "<", "$dirname\/$file") or die "can't open $file for reading: $!\n";
