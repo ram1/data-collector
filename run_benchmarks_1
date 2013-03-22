@@ -21,7 +21,8 @@ num_cores=4
 tec_i_increment=1
 tec_num_steps=5
 tec_i_initial=0
-dir=../tec_results/omnetpp_lbm_2_application_trial3
+dir=../tec_results/povray_2_application_trial3
+user=sreda
 set -e
 mkdir -p $dir
 
@@ -43,7 +44,7 @@ do
 			#Frequency/current limit
 			#if [[ "$freq" < "2.45" || "$val" > "0.5" ]]
 			#then
-				for ben in omnetpp lbm
+				for ben in povray 
 				do
 					for ((i=0; i<$num_cores; i++))
 					do
@@ -58,7 +59,7 @@ do
 				
 					#start TEC
 				
-					./data -e "$cmd_prefix $ben" -o "$dir/${ben}_${real_freq}_${tec}tec${val}a" -t 120 -n 2 -f "0 3" -r "$dir/err_file" -a -i "$val $val"
+					./data -e "$cmd_prefix $ben" -o "$dir/${ben}_${real_freq}_${tec}tec${val}a" -t 120 -n 2 -f "0 3" -r "$dir/err_file" -a -i "$val $val" 
 		
 					for ((i=0; i<$num_cores; i++))
 					do
@@ -80,6 +81,6 @@ do
 	done
 done	
 
-#cleanup. read permissions only on files to protect data.
-chmod o+w $dir
-chmod 666 $dir/*
+#Cleanup. Change ownership from root to the specified user.
+chown ${user}:${user} $dir
+chown ${user}:${user} $dir/*
