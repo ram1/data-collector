@@ -7,6 +7,8 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #define _GNU_SOURCE
 #define __USE_GNU
 #include <sched.h>
@@ -15,6 +17,7 @@
 #include "utilities.h"
 #include "power.h"
 #include "pws.h"
+#include "control.h"
 
 //###constants and variables###
 //data collection intervals [ms]
@@ -48,6 +51,7 @@ void collect(int signum);
 void collect_data();
 void kill_command(int pid);
 void setup();
+void simple_control(double t);
 
 //###code###
 
@@ -86,6 +90,19 @@ void collect_data()
 	}
 
 	completed_ms = 0;
+
+	//open file descriptors
+	int freq_fds[num_cores];
+	char freq_buf[70];
+	for(k = 0; k < num_cores; k++) {
+		snprintf(freq_buf, sizeof(freq_buf),
+			"/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_cur_freq",
+			k);
+		freq_fds[k] = open(freq_buf, O_RDONLY);
+		if(freq_fds[k] < 0) {
+			die("Opening cpu frequency failed. %s\n", strerror(errno));
+		}
+	}
 
 	//##output data##
 	const struct timespec delay = {INTERVAL/1000,(INTERVAL%1000)*10e6};
@@ -165,7 +182,31 @@ void collect_data()
 			}
 			
 			//timestamp [ms]
-			fprintf(output_file_handle, "%-15d\n", (int)completed_ms);
+			fprintf(output_file_handle, "%-15d", (int)completed_ms);
+
+			//frequencies [khz]
+			for(i = 0; i < num_cores; i++) {
+				if(lseek(freq_fds[i],0,SEEK_SET) < 0)
+					die("Seeking cpu freq. %s\n", strerror(errno));
+				int bytesread = read(freq_fds[i], freq_buf, sizeof(freq_buf));
+				if(bytesread < 0) {
+					die("Reading cpu frequency failed. %s\n", strerror(errno));
+				}
+				//-1 to remove newline. TODO robust newline stripping
+				freq_buf[bytesread-1] = 0; 
+				fprintf(output_file_handle, "%-15.2f", atoi(freq_buf)/1000000.0);
+			}
+			fprintf(output_file_handle, "\n");
+
+			//control
+			#ifdef CONTROL_ENABLE
+			double t_control;
+			if(completed_ms % (CONTROL_INTERVAL*INTERVAL) == 0) {
+				temp_read(1, &t_control);
+				control_test(t_control);
+			}
+			#endif
+
 		}
 
 		//nanosleep can be interrupted by signals, but
@@ -175,7 +216,11 @@ void collect_data()
 		nanosleep(&delay, NULL);
 		completed_ms += INTERVAL;
 	}
-
+	
+	for(k = 0; k < num_cores; k++) {
+		if(close(freq_fds[k]) < 0)
+			die("Could not close cpu freq fds %s\n", strerror(errno));
+	}
 	free(pids);
 	free(pid_exited);
 }

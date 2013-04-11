@@ -14,7 +14,7 @@ const sensors_chip_name **core_chip_names;
 //input temperature sensor. There is typically one per
 //core.
 int *core_subfeature_numbers;
-int num_cores;
+extern int num_cores; 
 
 int temp_init();
 void temp_cleanup();

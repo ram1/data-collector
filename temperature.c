@@ -11,6 +11,7 @@
 */
 
 //##Variables##
+int num_cores;
 
 //A list of sensors_chip_names, one per available
 //input fan sensor. 
@@ -63,6 +64,8 @@ int temp_init()
 	//##determine the available temperature sensors##
 	//Get wildcard description of coretemp	
 	sensors_chip_name wildcard, fan_wildcard;	
+	//nct6776-isa-* ASUS Z77 EXTREME
+	//Gigabyte it8718-*
 	if((errnum = sensors_parse_chip_name("nct6776-isa-*", &fan_wildcard)))
 	{		
 		die("error %d: sensors_parse_chip_name\n", errnum);

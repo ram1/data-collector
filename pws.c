@@ -8,12 +8,14 @@
 #include <time.h>
 #include "power.h"
 #include "pws.h"
+#include "control.h"
 
 
 pthread_t threads[10];
 enum state_t states[10];
 double curr_pws_v[10];		
 double curr_pws_i[10];
+double pws_i_control[10];
 int files[10];
 
 
@@ -85,11 +87,21 @@ void init_pws() {
 			/*Start at a low current that prevents the RSV power
 			supply error, but allows observation of dynamic
 			behavior.*/
-			if(options_opt.pws_delay != 0 && 
-				options_opt.pws_current[i] != 0)
+
+			//In the case of the controller, ignore the initial
+			//current provided by the user and start at 0.3 A
+			//to avoid the RSV error. See rw_pws.
+			int control_enabled = 0;
+			#ifdef CONTROL_ENABLE
+				control_enabled = 1;
+				engaged[i] = 1;
+			#endif
+
+			if((options_opt.pws_delay != 0 && 
+				options_opt.pws_current[i] != 0) || control_enabled)
 			{
 				sprintf(buffer,"SOUR:CURR %fA", 
-					0.3);
+					0.35);
 				pws_mywrite(files[i], buffer);
 				pws_mywrite(files[i], "OUTPUT 1");
 			}
@@ -158,14 +170,11 @@ void *rw_pws(void *chan) {
 		pws_myread(files[ch], "MEAS:CURR:DC?", buffer);
 		parse_pws(buffer, ch, curr_pws_i);
 
-		//#ifdef ENABLE_MCR
-			//if (activate_control) {
-			//	char iset_cmd[50];
-			//	sprintf(iset_cmd, "SOUR:CURR %fA", pws_i_control[ch]);
-			//	pws_mywrite(files[ch], iset_cmd); 
-			//	sleep(pause_seconds);
-			//}
-		//#endif
+		#ifdef CONTROL_ENABLE
+			char iset_cmd[50];
+			sprintf(iset_cmd, "SOUR:CURR %fA", pws_i_control[ch]);
+			pws_mywrite(files[ch], iset_cmd); 
+		#endif
 
 		if (states[ch] == INIT) states[ch] = RUNNING;
 	}

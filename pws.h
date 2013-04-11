@@ -7,6 +7,7 @@
 
 extern double curr_pws_v[10];		
 extern double curr_pws_i[10];
+extern double pws_i_control[10];
 
 void pws_cleanup();
 void start_pws(); 

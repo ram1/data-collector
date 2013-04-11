@@ -19,67 +19,72 @@ float_scale=4
 cmd_prefix="/usr/cpu2006/bin/runspec --config=lin32.cfg --size=ref --noreportable --iterations=1"
 num_cores=4
 tec_i_increment=1
-tec_num_steps=5
+tec_num_steps=6
 tec_i_initial=0
-dir=../tec_results/povray_2_application_trial3
+dir=../tec_results/new_system/povray_2_application
 user=sreda
+num_trials=2
 set -e
 mkdir -p $dir
 
-#engage/disengage tec
-for ((tec=1; tec>0; tec--))
+for((trial=0; trial<$num_trials; trial++))
 do
-	#tec values [A]
-	for ((k=0; k<$tec_num_steps; k++))
+	#engage/disengage tec
+	for ((tec=1; tec>0; tec--))
 	do
-		for freq in 1.55 1.65 1.75 1.85 1.95 2.05 2.15 2.25 2.35 2.45 2.55 2.65 2.75 
-		do		#gobmk hmmer sjeng libquantum h264ref omnetpp astar xalancbmk bwaves gamess milc zeusmp gromacs cactusADM leslie3d namd dealII soplex povray calculix GemsFDTD tonto lbm wrf sphinx3 bzip2 gcc mcf
-			set -f
-			exp="$tec*($tec_i_initial + $k * $tec_i_increment)"
-			val=$(float_eval "$exp")
-			exp="$freq+0.05"
-			real_freq=$(float_eval "$exp")
-			set +f
-
-			#Frequency/current limit
-			#if [[ "$freq" < "2.45" || "$val" > "0.5" ]]
-			#then
-				for ben in povray 
-				do
-					for ((i=0; i<$num_cores; i++))
+		#tec values [A]
+		for ((k=0; k<$tec_num_steps; k++))
+		do
+			for freq in 1.55 1.65 1.75 1.85 1.95 2.05 2.15 2.25 2.35 2.45 2.55 2.65 2.75 
+			do		#gobmk hmmer sjeng libquantum h264ref omnetpp astar xalancbmk bwaves gamess milc zeusmp gromacs cactusADM leslie3d namd dealII soplex povray calculix GemsFDTD tonto lbm wrf sphinx3 bzip2 gcc mcf
+				set -f
+				exp="$tec*($tec_i_initial + $k * $tec_i_increment)"
+				val=$(float_eval "$exp")
+				exp="$freq+0.05"
+				real_freq=$(float_eval "$exp")
+				set +f
+	
+				#Frequency/current limit
+				#if [[ "$freq" < "2.45" || "$val" > "0.5" ]]
+				#then
+					for ben in povray  
 					do
-						echo "brown340" | sudo -S -E cpufreq-set -f ${freq}g -c ${i}
-					done
+						#echo "$dir/${ben}_${real_freq}_${tec}tec${val}a_trial${trial}\n"
+						for ((i=0; i<$num_cores; i++))
+						do
+							echo "brown340" | sudo -S -E cpufreq-set -f ${freq}g -c ${i}
+						done
+						
+						currdir=$(pwd)
+						cd /usr/cpu2006
+						source shrc
+						cd $currdir
+						echo "$cmd_prefix $ben"
 					
-					currdir=$(pwd)
-					cd /usr/cpu2006
-					source shrc
-					cd $currdir
-					echo "$cmd_prefix $ben"
-				
-					#start TEC
-				
-					./data -e "$cmd_prefix $ben" -o "$dir/${ben}_${real_freq}_${tec}tec${val}a" -t 120 -n 2 -f "0 3" -r "$dir/err_file" -a -i "$val $val" 
-		
-					for ((i=0; i<$num_cores; i++))
-					do
-						echo "brown340" | sudo -S -E cpufreq-set -f 1.55g -c ${i}
-					done
-		
-					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
-					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
-					sleep 60
-					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
-					sleep 30
-					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
-					sleep 30
-					echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
-
-		 		done 
-			#fi
+						#start TEC
+					
+						./data -e "$cmd_prefix $ben" -o "$dir/${ben}_${real_freq}_${tec}tec${val}a_trial${trial}" -t 120 -n 2 -f "0 3" -r "$dir/err_file" -a -i "$val $val" 
+			
+						for ((i=0; i<$num_cores; i++))
+						do
+							echo "brown340" | sudo -S -E cpufreq-set -f 1.55g -c ${i}
+						done
+			
+						echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+						echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+						sleep 60
+						echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+						sleep 30
+						echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+						sleep 30
+						echo "brown340" | sudo -S -E /home/sreda/Documents/pfmon/killp.pl $ben
+	
+			 		done 
+				#fi
+			done
 		done
-	done
-done	
+	done	
+done
 
 #Cleanup. Change ownership from root to the specified user.
 chown ${user}:${user} $dir

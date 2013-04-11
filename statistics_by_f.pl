@@ -35,8 +35,12 @@ my @files_sorted = (sort @files);
 closedir(DIR);
 
 #Parameters
+#The multimeter is assumed to be immediately after
+#the cores.
 my $num_cores = 4;
-my $num_tec = 2;
+my $num_tec = 1;
+my $fan_index = 3; #0 indexed
+my $tec_start_index = 5; #0 indexed
 
 #Data
 foreach my $file (@files_sorted)
@@ -62,7 +66,11 @@ foreach my $file (@files_sorted)
 				my @columns = split(/\s+/, $line);
 
 				#Average T over all cores
-				my $t =($columns[0]+$columns[1]+$columns[2]+$columns[3])/4;
+				my $t = 0;
+				for(my $core=0; $core < $num_cores; $core++) {
+					$t += $columns[$core];
+				}
+				$t = $t/$num_cores;	
 				push @temperatures,$t;
 				
 				#Per core statistics
@@ -72,12 +80,11 @@ foreach my $file (@files_sorted)
 				}
 				
 				#Regulator voltage
-				push(@voltages, $columns[4]);
+				push(@voltages, $columns[$num_cores]);
 
 				#Fan speed
-				push(@rpms, $columns[6]);
+				push(@rpms, $columns[$fan_index]);
 
-				my $tec_start_index = 7;
 				for(my $k = 0; $k < $num_tec; $k++)
 				{
 					push @{$tec_v[$k]},$columns[$tec_start_index+$k*2];
