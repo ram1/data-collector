@@ -10,16 +10,26 @@ objects = temperature.o data_collector.o options.o \
 #location of the sensors library, and -I for the
 #locations of sensors.h
 data : $(objects)
-	cc -Wall -o data $(objects) -L"/usr/local/lib" -lsensors -pthread
-temperature.o : temperature.h utilities.h
+	cc -Wall -g -o data $(objects) -L"/usr/local/lib" -lsensors -pthread
+temperature.o : temperature.h utilities.h temperature.c
+	cc -g -c -o temperature.o temperature.c
 data_collector.o : options.h utilities.h temperature.h power.h pws.h \
-	control.h
-options.o : utilities.h options.h pws.h utilities.h
-utilities.o : utilities.h options.h
-power.o : power.h utilities.h
-pws.o : pws.h power.h control.h 
-control.o : control.h utilities.h temperature.h pws.h 
-
+	control.h data_collector.h data_collector.c
+	cc -g -c -o data_collector.o data_collector.c
+options.o : utilities.h options.h pws.h utilities.h options.c control.h \
+	pws.h
+	cc -g -c -o options.o options.c
+utilities.o : utilities.h options.h utilities.c
+	cc -g -c -o utilities.o utilities.c
+power.o : power.h utilities.h power.c
+	cc -g -c -o power.o power.c
+pws.o : pws.h power.h control.h pws.c
+	cc -g -c -o pws.o pws.c
+control.o : control.h utilities.h temperature.h pws.h data_collector.h \
+	control.c options.h
+	cc -g -c -o control.o control.c
+#TODO Accurately describe control.h including data_collector.h, options.h
+#including control.h
 .PHONY : clean
 clean :
 	rm data $(objects)

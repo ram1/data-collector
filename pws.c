@@ -95,13 +95,14 @@ void init_pws() {
 			#ifdef CONTROL_ENABLE
 				control_enabled = 1;
 				engaged[i] = 1;
+				pws_i_control[i] = PWS_I_DEFAULT;
 			#endif
 
 			if((options_opt.pws_delay != 0 && 
 				options_opt.pws_current[i] != 0) || control_enabled)
 			{
 				sprintf(buffer,"SOUR:CURR %fA", 
-					0.35);
+					PWS_I_DEFAULT);
 				pws_mywrite(files[i], buffer);
 				pws_mywrite(files[i], "OUTPUT 1");
 			}

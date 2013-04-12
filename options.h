@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include "pws.h"
+#include "control.h"
 
 typedef struct options 
 {
@@ -30,6 +31,7 @@ typedef struct options
 	float pws_current[NUM_PWS_CHANNELS];
 	int pws_delay;
 	int *affinities;
+	control_parameters_t control_params;
 } options;
 extern options options_opt;
 

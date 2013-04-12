@@ -18,6 +18,7 @@
 #include "power.h"
 #include "pws.h"
 #include "control.h"
+#include "data_collector.h"
 
 //###constants and variables###
 //data collection intervals [ms]
@@ -103,6 +104,10 @@ void collect_data()
 			die("Opening cpu frequency failed. %s\n", strerror(errno));
 		}
 	}
+	
+	//controller
+	control_info_t control_data;
+	
 
 	//##output data##
 	const struct timespec delay = {INTERVAL/1000,(INTERVAL%1000)*10e6};
@@ -152,15 +157,18 @@ void collect_data()
 				if(temp_status != 0)
 				{
 					die("error %d: reading core %d T",
-        	   temp_status, i);
+		        	   temp_status, i);
 				}
 				fprintf(output_file_handle, "%-15.1f", t);
+				control_data.ts[i] = t;
 			}
 
 
 			//power
+			control_data.pcpu = 0;
 	  		for(i = 0; i < NUM_PWR_CHANNELS; i++) {
 	  		  fprintf(output_file_handle, "%-15.8f ", curr_pwr[i]);
+			  control_data.pcpu += curr_pwr[i]*MV_TO_CPU_POWER;
 	  		}
 
 			//fan speeds
@@ -175,10 +183,12 @@ void collect_data()
 			//power supplies. If we are not collecting data from
 			//the power supplies, the globals are initialized to zero
 			//and we will read these values.
+			control_data.ptec = 0;
 			for(i = 0; i < NUM_PWS_CHANNELS; i++)
 			{
 				fprintf(output_file_handle, "%-15.5f", curr_pws_v[i]);
 				fprintf(output_file_handle, "%-15.5f", curr_pws_i[i]);
+				control_data.ptec += curr_pws_v[i]*curr_pws_i[i];
 			}
 			
 			//timestamp [ms]
@@ -200,10 +210,8 @@ void collect_data()
 
 			//control
 			#ifdef CONTROL_ENABLE
-			double t_control;
-			if(completed_ms % (CONTROL_INTERVAL*INTERVAL) == 0) {
-				temp_read(1, &t_control);
-				control_test(t_control);
+			if(completed_ms % (options_opt.control_params.interval*INTERVAL) == 0) {
+				control_simple(control_data);
 			}
 			#endif
 

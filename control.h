@@ -9,9 +9,30 @@ TODO Put a check in code on the restrictions.
 
 
 */
+#include "data_collector.h"
 
 #define CONTROL_ENABLE
-#define CONTROL_INTERVAL 10
+#define CONTROL_NUM_PARAMS 9
+typedef struct control_info {
+	double ts[NUM_CORES];
+	double ptec;
+	double pcpu;
+} control_info_t;
+
+typedef struct control_parameters {
+	int interval;
+	float tmax;
+	float pmax;
+	float imin;
+	float imax;
+	float fstep;
+	float istep;
+	float t_hyst;
+	float p_hyst;
+} control_parameters_t;
+
 void control_test(double t);
+void control_simple(control_info_t info);
+
 
 

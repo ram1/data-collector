@@ -78,12 +78,12 @@ void init_power() {
 			//mywrite(myfile[k], "SAMP:SOUR TIM"); 
 			//mywrite(myfile[k], "SAMP:TIM 1 ms");
 			//mywrite(myfile[k], "INIT"); 		
-			do
-			{
+			//do
+			//{
 				myread(myfile[k], "SYST:ERR?", err);
 				error_message("- POWER: meter %d initialized with error status %s", 
 					k, err);
-			} while(strncmp(err,"+0",2) != 0);
+			//} while(strncmp(err,"+0",2) != 0);
 		}	
 	}
 	error_message("- detected %d power meters\n", k);

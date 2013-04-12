@@ -3,6 +3,7 @@
 
 #define COLLECT_PWS
 #define PWS_BUFFER_SIZE 100
+#define PWS_I_DEFAULT 0.5
 #define NUM_PWS_CHANNELS 2
 
 extern double curr_pws_v[10];		
