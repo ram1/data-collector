@@ -1,0 +1,138 @@
+###Files###
+-Makefile -- Run make to compile
+-control.c, control.h -- ImplementS the controller. The controller
+assumes the cpu frequency start at 1.6 GHz.
+-data_collector.c, data_collector.h -- Main data collection loop
+-options.c, options.h -- Parses user inputs
+-power.c, power.h -- Digital multimeter
+-pws.c, pws.h -- Power supply
+-temperature.c, temperature.h -- Fan speed and temperature sensors
+-utilities.c, utilities.h -- Helper functions
+
+###Command Line Interface and Parameters###
+-e <command to execute>
+-n <number of applications to launch>
+-f <core affinities of each application, specified as a space-separated list>
+-l <delay in s before starting power supply>. This is discarded if the controller
+is being used. It has no impact.
+-i <initial tec currents, one per power supply, as a space-separated list>.
+This is discarded if the controller is being used. It has no impact.
+-t <time to run, in s>
+-c <a space-separated list specifying controller parameters>
+	1 interval s
+	2 tmax C
+	3 pmax W
+	4 imin A
+	5 imax A
+	6 fstep GHz
+	7 istep GHz
+	8 t_hyst C
+	9 p_hyst W
+-o <output file>
+-r <output error file>
+-a <allow appending each run's errors to the same error file>
+-d. Debugging messages are printed. See debug_message in
+utilities.h
+
+
+control.h
+	-#define CONTROL_ENABLE
+control.c
+	-FREQ_MIN
+	-FREQ_MAX
+data_collector.h
+	-#define NUM_CORES
+	-#define MV_TO_CPU_POWER
+power.h
+	-BUFFER_SIZE
+power.c
+	-NUM_PWR_CHANNELS -- number of dmms
+pws.h
+	-#define COLLECT_PWS -- whether we should do tec control or not
+	-#define PWS_BUFFER_SIZE 100
+	-#define PWS_I_DEFAULT 0.5 -- in the case of a delay before starting
+	the power, the power supply runs at this default current. Also,
+	with the controller, the controller runs at this default current
+	until the first control decision is made.
+	-#define NUM_PWS_CHANNELS 2 -- number of power supplies
+temperature.h
+	-#define NUM_FANS. The number of fans to record data from.
+	With libsensors, the second fan often contains the relevant data.
+temperature.c
+	-In temp_init, in the calls to sensors_parse_chip_name the 
+	chip names will have to be changed based upon the motherboard.
+	Run sensors, or the sensors_detect script to determine
+	what the motherboard sensors are.
+
+
+###Hints###
+-Sometimes the sensor chip names in temperature.c have to be changed
+if moving to a new motherboard. The program may segfault without a change.
+-git. Use it.
+-diode
+-To test the run_benchmarks scripts, have it echo what it will do first
+as a test. Then run the real thing.
+-When running remotely over ssh, disown the process from the shell
+before exiting. Also >/dev/null 2>&1
+-Sometimes the DMM fails. It has to be power-cycled to fix it.
+-Use #undef to undefine parameters you don't want.
+-When using gdb run as sudo. Start gdb ./data, then provide arguments when 
+you run.
+-To check the collected data, make sure power increases with frequency.
+Also check that the TEC does some cooling.
+
+
+###File Formats###
+temperature(*num_core) power/dmm(*num_dmm) fan_speed {power_supply_v power_supply_i}(*num_pws) timestamp(ms) frequency(*num_core)
+
+"benchmark,avg_T[C],min,max,meandev,initial,avg_shunt_v[V],"
+	. "avg_fan_rpm, core[i] T, core[i] Tmin, core[i] Tmax, core[i] Tmeandev,"
+	. "core[i] Tinitial, tec[i] voltage [V], tec[i] voltage meandev,"
+	. "tec[i] current [A], tec[i] current meandev, tec[i] power [W]\n"
+	
+Fixed frequency, then fixed current
+0,1.6
+1,1.6
+2,1.6
+3,1.6
+...
+0,2.8
+1,2.8
+2,2.8
+3,2.8
+0,1.6
+0,1.7
+0,1.8
+0,1.9
+...
+3,1.6
+3,1.7
+...
+
+
+###Data Processing Scripts###
+statistics_by_f.pl <regex> <folder>
+	The output format of the data collector is tab-separated.
+	statistics_by_f processes all files in the folder matching
+	regex. It takes the output of the data collector and computes
+	average temperature per core, power consumption, etc.
+	The output goes into summary_<regex>.csv
+contour.pl input_file output_file
+	Takes an output of statistics_by_f.pl and reorders the results,
+	sorting by frequency and current. Each entry in the input file
+	should be in the following format: 
+	<benchmark name>_<number>g_tec<value>a_<other information>
+process_benchmark.sh <regex> <folder>
+	Runs statistics_by_f.pl and contour.pl
+run_benchmarks_1
+	A script to run experiments. The user can specify TEC currents,
+	frequencies, benchmarks, # of trials. 
+rename.pl <folder> <regex>
+	Renames files matching the regex. See the script for details.
+	
+
+###TODO###
+-Integrate perf (perf.wiki.kernel.org)
+-Improve the user interface + extensibility
+-Testing
+-Code cleanup
